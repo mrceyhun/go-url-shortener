@@ -6,7 +6,10 @@ import (
 	"flag"
 	"github.com/gin-gonic/gin"
 	"github.com/mrceyhun/go-url-shortener/controllers"
+	"github.com/mrceyhun/go-url-shortener/docs"
 	"github.com/mrceyhun/go-url-shortener/mongo"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/sync/errgroup"
 	"log"
 	"net/http"
@@ -25,16 +28,20 @@ var timeout = time.Duration(*paramTimeout) * time.Second
 
 // MainRouter main request router
 func MainRouter() http.Handler {
-	engine := gin.New()
-	engine.Use(gin.Recovery(), middlewareReqHandler())
-	v1 := engine.Group("/api/v1")
+	r := gin.New()
+	r.Use(gin.Recovery(), middlewareReqHandler())
+
+	docs.SwaggerInfo.BasePath = "/api/v1"
+
+	v1 := r.Group("/api/v1")
 
 	shortUrl := v1.Group("/short-url")
 	{
-		shortUrl.GET("/:id", controllers.GetUrl)
+		shortUrl.GET("/:id", controllers.GetUrlByHash)
 		shortUrl.POST("/", controllers.CreateShortUrl)
 	}
-	return engine
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	return r
 }
 
 // initializeMongoConnection main DB connection function
@@ -44,6 +51,7 @@ func initializeMongoConnection() {
 	if err != nil {
 		log.Printf("cannot read MongoDB config file %s", err)
 	}
+	log.Println(mongoConf.String())
 	mongo.ConnectDb(mongoConf.Uri, timeout)
 	controllers.DbClient = mongo.GetMongoDbConnector(mongoConf.Db, mongoConf.Collection)
 }
@@ -79,6 +87,10 @@ func Serve() {
 }
 
 // main
+// @title go-url-shortener API documentation
+// @version 1.0.0
+// @host localhost:8080
+// @BasePath /api/v1
 func main() {
 	Serve()
 }

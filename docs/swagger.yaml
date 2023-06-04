@@ -1,0 +1,75 @@
+basePath: /api/v1
+definitions:
+  model.ShortUrl:
+    properties:
+      hash:
+        type: string
+      url:
+        type: string
+    required:
+    - hash
+    - url
+    type: object
+  model.ShortUrlReq:
+    properties:
+      url:
+        type: string
+    required:
+    - url
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  title: go-url-shortener API documentation
+  version: 1.0.0
+paths:
+  /short-url/:
+    post:
+      consumes:
+      - application/json
+      description: Create new hash:url couple from given url
+      parameters:
+      - description: Short Url Request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/model.ShortUrlReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ShortUrl'
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Creates the md5 hash of given URL string and stores it in DB
+      tags:
+      - ShortUrl
+  /short-url/{id}:
+    get:
+      description: get URL string from given hash of it
+      parameters:
+      - description: Hash String
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ShortUrl'
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      summary: Get URL string of a hash
+      tags:
+      - ShortUrl
+swagger: "2.0"

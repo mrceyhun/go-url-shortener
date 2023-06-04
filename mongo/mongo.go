@@ -4,7 +4,7 @@ package mongo
 
 import (
 	"context"
-	"github.com/mrceyhun/go-url-shortener/models"
+	"github.com/mrceyhun/go-url-shortener/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,31 +15,31 @@ import (
 // client MongoDB client
 var client *mongo.Client
 
-// dbConnector MongoDB client compatible with models.DbConnector interface
+// dbConnector MongoDB client compatible with model.DbConnector interface
 type dbConnector struct {
 	collection *mongo.Collection
 }
 
-// Insert models.ShortUrl to the MongoDB
-func (mc dbConnector) Insert(ctx *context.Context, data *models.ShortUrl) error {
+// Insert model.ShortUrl to the MongoDB
+func (mc dbConnector) Insert(ctx *context.Context, data *model.ShortUrl) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	_, err := mc.collection.InsertOne(*ctx, *data)
 	return err
 }
 
-// FindOne no sort, skip, limit, just match and return models.ShortUrl from MongoDB
-func (mc dbConnector) FindOne(ctx *context.Context, hashId string) (models.ShortUrl, error) {
-	var result models.ShortUrl
+// FindOne no sort, skip, limit, just match and return model.ShortUrl from MongoDB
+func (mc dbConnector) FindOne(ctx *context.Context, hashId string) (model.ShortUrl, error) {
+	var result model.ShortUrl
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	err := mc.collection.FindOne(*ctx, bson.M{"Hash": hashId}, &options.FindOneOptions{}).Decode(&result)
 	if err != nil {
-		return models.ShortUrl{}, err
+		return model.ShortUrl{}, err
 	}
 	return result, nil
 }
 
-// GetMongoDbConnector initialize and return models.DbConnector MongoDB instance
-func GetMongoDbConnector(db string, collection string) models.DbConnector {
+// GetMongoDbConnector initialize and return model.DbConnector MongoDB instance
+func GetMongoDbConnector(db string, collection string) model.DbConnector {
 	return dbConnector{
 		collection: client.Database(db).Collection(collection),
 	}

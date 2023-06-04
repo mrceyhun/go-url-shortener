@@ -1,4 +1,4 @@
-package models
+package model
 
 // Copyright (c) 2023 - Ceyhun Uzunoglu <ceyhunuzngl AT gmail dot com>
 
@@ -12,7 +12,7 @@ type DbConnector interface {
 
 // ShortUrlReq incoming POST request struct to create short url
 type ShortUrlReq struct {
-	Url string `bson:"Url" validate:"required"`
+	Url string `validate:"required"`
 }
 
 // ShortUrl model of key:value couple representation of unique hash id and URL
