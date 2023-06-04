@@ -1,11 +1,11 @@
-package main
+package server
 
 // Copyright (c) 2023 - Ceyhun Uzunoglu <ceyhunuzngl AT gmail dot com>
 
 import "github.com/gin-gonic/gin"
 
-// middlewareReqHandler handles CORS and HTTP request settings for the context router
-func middlewareReqHandler() gin.HandlerFunc {
+// MiddlewareReqHandler handles CORS and HTTP request settings for the context router
+func MiddlewareReqHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")

@@ -8,6 +8,7 @@ import (
 	"github.com/mrceyhun/go-url-shortener/controllers"
 	"github.com/mrceyhun/go-url-shortener/docs"
 	"github.com/mrceyhun/go-url-shortener/mongo"
+	"github.com/mrceyhun/go-url-shortener/server"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/sync/errgroup"
@@ -29,7 +30,7 @@ var timeout = time.Duration(*paramTimeout) * time.Second
 // MainRouter main request router
 func MainRouter() http.Handler {
 	r := gin.New()
-	r.Use(gin.Recovery(), middlewareReqHandler())
+	r.Use(gin.Recovery(), server.MiddlewareReqHandler())
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
