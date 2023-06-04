@@ -57,8 +57,12 @@ func initializeMongoConnection() {
 	controllers.DbClient = mongo.GetMongoDbConnector(mongoConf.Db, mongoConf.Collection)
 }
 
-// Serve run service
-func Serve() {
+// main
+// @title go-url-shortener API documentation
+// @version 1.0.0
+// @host localhost:8080
+// @BasePath /api/v1
+func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
 
@@ -85,13 +89,4 @@ func Serve() {
 	if err := g.Wait(); err != nil {
 		log.Printf("[ERROR] server failed %s", err)
 	}
-}
-
-// main
-// @title go-url-shortener API documentation
-// @version 1.0.0
-// @host localhost:8080
-// @BasePath /api/v1
-func main() {
-	Serve()
 }
