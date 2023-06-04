@@ -3,50 +3,49 @@ package mongo
 // Copyright (c) 2023 - Ceyhun Uzunoglu <ceyhunuzngl AT gmail dot com>
 
 import (
+	"context"
 	"github.com/mrceyhun/go-url-shortener/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"time"
 )
 
-import (
-	"context"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-)
+// client MongoDB client
+var client *mongo.Client
 
-var Client *mongo.Client
-
-type Connection struct {
+// dbConnector MongoDB client compatible with models.DbConnector interface
+type dbConnector struct {
 	collection *mongo.Collection
 }
 
-func GetMongoKeyValueClient(db string, collection string) models.DatabaseClient {
-	return Connection{
-		collection: Client.Database(db).Collection(collection),
-	}
-}
-
-// Insert returns count of query result
-func (mc Connection) Insert(ctx *context.Context, data *models.ShortUrl) error {
+// Insert models.ShortUrl to the MongoDB
+func (mc dbConnector) Insert(ctx *context.Context, data *models.ShortUrl) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	_, err := mc.collection.InsertOne(*ctx, *data)
 	return err
 }
 
-// FindOne no sort, skip, limit, just match
-func (mc Connection) FindOne(ctx *context.Context, hashId string) (error, models.ShortUrl) {
+// FindOne no sort, skip, limit, just match and return models.ShortUrl from MongoDB
+func (mc dbConnector) FindOne(ctx *context.Context, hashId string) (models.ShortUrl, error) {
 	var result models.ShortUrl
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	opts := options.FindOneOptions{}
-	x := mc.collection.FindOne(*ctx, bson.M{"Hash": hashId}, &opts)
-	if err := x.Decode(&result); err != nil {
-		return err, models.ShortUrl{}
+	err := mc.collection.FindOne(*ctx, bson.M{"Hash": hashId}, &options.FindOneOptions{}).Decode(&result)
+	if err != nil {
+		return models.ShortUrl{}, err
 	}
-	return nil, result
+	return result, nil
 }
 
-// ---------------- initialize ----------
+// GetMongoDbConnector initialize and return models.DbConnector MongoDB instance
+func GetMongoDbConnector(db string, collection string) models.DbConnector {
+	return dbConnector{
+		collection: client.Database(db).Collection(collection),
+	}
+}
+
+// ---------------- Connect to MongoDB ----------
 
 // ConnectDb connects to MongoDB
 func ConnectDb(mongoUri string, timeout time.Duration) {
@@ -55,10 +54,10 @@ func ConnectDb(mongoUri string, timeout time.Duration) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if Client, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoUri).SetConnectTimeout(timeout)); err != nil {
+	if client, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoUri).SetConnectTimeout(timeout)); err != nil {
 		log.Fatal(err)
 	}
-	if err = Client.Ping(context.Background(), nil); err != nil {
+	if err = client.Ping(context.Background(), nil); err != nil {
 		log.Fatal(err)
 	}
 }

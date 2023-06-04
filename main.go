@@ -3,115 +3,82 @@ package main
 // Copyright (c) 2023 - Ceyhun Uzunoglu <ceyhunuzngl AT gmail dot com>
 
 import (
-    "context"
-    "crypto/md5"
-    "encoding/hex"
-    "flag"
-    "fmt"
-    "github.com/gin-gonic/gin"
-    "github.com/gin-gonic/gin/binding"
-    "github.com/mrceyhun/go-url-shortener/models"
-    "github.com/mrceyhun/go-url-shortener/mongo"
-    "golang.org/x/sync/errgroup"
-    "log"
-    "net/http"
-    "time"
+	"flag"
+	"github.com/gin-gonic/gin"
+	"github.com/mrceyhun/go-url-shortener/controllers"
+	"github.com/mrceyhun/go-url-shortener/mongo"
+	"golang.org/x/sync/errgroup"
+	"log"
+	"net/http"
+	"time"
 )
 
 // Flags
 var (
-    paramListenAndServeAddress = flag.String("address", "localhost:8080", "listen and serve address")
-    paramMongoUri              = flag.String("mongo-uri", "", "MongoDB uri")
-    paramMongoDb               = flag.String("mongo-db", "", "MongoDB database")
-    paramMongoCollection       = flag.String("mongo-col", "", "MongoDB database")
-    paramTimeout               = flag.Int("timeout", 10, "timeout seconds")
+	address         = flag.String("address", "localhost:8080", "listen and serve address")
+	mongoConfigFile = flag.String("mongo-conf", "./mongo/config.json", "MongoDB configuration file")
+	paramTimeout    = flag.Int("timeout", 10, "timeout seconds")
 )
 
-// timeout mongo and gin-gonic context timout
+// timeout context timout
 var timeout = time.Duration(*paramTimeout) * time.Second
-
-// dbClient general key-value DB client
-var dbClient models.DatabaseClient
-
-// utilGetHash creates the md5 hash of string
-func utilGetHash(u string) string {
-    md5Instance := md5.New()
-    md5Instance.Write([]byte(u))
-    md5Hash := hex.EncodeToString(md5Instance.Sum(nil))
-    return md5Hash
-}
-
-// handlerUrlFromHash request handler to get URL from given hash
-func handlerUrlFromHash(c *gin.Context) {
-    ctx, cancel := context.WithTimeout(context.Background(), timeout)
-    defer cancel()
-    err, result := dbClient.FindOne(&ctx, c.Param("id"))
-    if err != nil {
-        c.JSON(http.StatusBadRequest, fmt.Sprintf("Short url creating error: %s", err.Error()))
-    }
-    c.JSON(http.StatusOK, result.Url)
-}
-
-// handlerUrlFromHash request handler to create the md5 hash of given URL
-func handlerUrlShortener(c *gin.Context) {
-    var req models.ShortUrlReq
-    ctx, cancel := context.WithTimeout(context.Background(), timeout)
-    defer cancel()
-
-    err := c.ShouldBindBodyWith(&req, binding.JSON)
-    if err != nil {
-        tempReqBody, _ := c.Get(gin.BodyBytesKey)
-        c.JSON(http.StatusBadRequest, fmt.Sprintf("Request body: %s", string(tempReqBody.([]byte))))
-    }
-    hash := utilGetHash(req.Url)
-    err = dbClient.Insert(&ctx, &models.ShortUrl{
-        Url:  req.Url,
-        Hash: hash,
-    })
-    if err != nil {
-        c.JSON(http.StatusBadRequest, fmt.Sprintf("Short url creation failed:%v", err.Error()))
-    }
-    c.JSON(http.StatusOK, hash)
-}
 
 // MainRouter main request router
 func MainRouter() http.Handler {
-    engine := gin.New()
-    engine.Use(gin.Recovery(), middlewareReqHandler())
-    e := engine.Group("/api/v1")
-    {
-        e.GET("/short-url/:id", handlerUrlFromHash)
-        e.POST("/short-url", handlerUrlShortener)
-    }
-    return engine
+	engine := gin.New()
+	engine.Use(gin.Recovery(), middlewareReqHandler())
+	v1 := engine.Group("/api/v1")
+
+	shortUrl := v1.Group("/short-url")
+	{
+		shortUrl.GET("/:id", controllers.GetUrl)
+		shortUrl.POST("/", controllers.CreateShortUrl)
+	}
+	return engine
+}
+
+// initializeMongoConnection main DB connection function
+func initializeMongoConnection() {
+	// get MongoDB config and connect to the DB
+	err, mongoConf := mongo.ParseConfig(*mongoConfigFile)
+	if err != nil {
+		log.Printf("cannot read MongoDB config file %s", err)
+	}
+	mongo.ConnectDb(mongoConf.Uri, timeout)
+	controllers.DbClient = mongo.GetMongoDbConnector(mongoConf.Db, mongoConf.Collection)
 }
 
 // Serve run service
 func Serve() {
-    log.SetFlags(log.LstdFlags | log.Lshortfile)
-    flag.Parse()
-    timeout = time.Duration(*paramTimeout) * time.Second
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	flag.Parse()
 
-    mongo.ConnectDb(*paramMongoUri, timeout)
+	// get timout seconds from input parameter and create its duration
+	timeout = time.Duration(*paramTimeout) * time.Second
 
-    dbClient = mongo.GetMongoKeyValueClient(*paramMongoDb, *paramMongoCollection)
+	// set controller timeout
+	controllers.Timeout = timeout
 
-    var g errgroup.Group
-    mainServer := &http.Server{
-        Addr:         *paramListenAndServeAddress,
-        Handler:      MainRouter(),
-        ReadTimeout:  timeout,
-        WriteTimeout: timeout,
-    }
-    g.Go(func() error {
-        return mainServer.ListenAndServe()
-    })
-    if err := g.Wait(); err != nil {
-        log.Printf("[ERROR] server failed %s", err)
-    }
+	// connect to Mongo
+	initializeMongoConnection()
+
+	// create server group
+	var g errgroup.Group
+	mainServer := &http.Server{
+		Addr:         *address,
+		Handler:      MainRouter(),
+		ReadTimeout:  timeout,
+		WriteTimeout: timeout,
+	}
+	g.Go(func() error {
+		return mainServer.ListenAndServe()
+	})
+	if err := g.Wait(); err != nil {
+		log.Printf("[ERROR] server failed %s", err)
+	}
 }
 
 // main
 func main() {
-    Serve()
+	Serve()
 }

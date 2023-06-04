@@ -1,5 +1,7 @@
 package main
 
+// Copyright (c) 2023 - Ceyhun Uzunoglu <ceyhunuzngl AT gmail dot com>
+
 import "github.com/gin-gonic/gin"
 
 // middlewareReqHandler handles CORS and HTTP request settings for the context router
