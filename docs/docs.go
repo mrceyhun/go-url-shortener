@@ -16,7 +16,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/short-url/": {
+        "/short-url": {
             "post": {
                 "description": "Create new hash:url couple from given url",
                 "consumes": [

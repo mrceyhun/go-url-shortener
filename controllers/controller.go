@@ -50,7 +50,7 @@ func GetUrlByHash(c *gin.Context) {
 // @Param user body model.ShortUrlReq true "Short Url Request"
 // @Success 200 {object} model.ShortUrl
 // @Failure 400,500 {object} object
-// @Router /short-url/ [post]
+// @Router /short-url [post]
 func CreateShortUrl(c *gin.Context) {
 	var req model.ShortUrlReq
 	var shortUrl model.ShortUrl

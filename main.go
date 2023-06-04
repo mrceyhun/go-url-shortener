@@ -39,7 +39,7 @@ func MainRouter() http.Handler {
 	shortUrl := v1.Group("/short-url")
 	{
 		shortUrl.GET("/:id", controllers.GetUrlByHash)
-		shortUrl.POST("/", controllers.CreateShortUrl)
+		shortUrl.POST("", controllers.CreateShortUrl)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	return r

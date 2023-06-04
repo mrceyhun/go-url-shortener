@@ -23,7 +23,7 @@ info:
   title: go-url-shortener API documentation
   version: 1.0.0
 paths:
-  /short-url/:
+  /short-url:
     post:
       consumes:
       - application/json
