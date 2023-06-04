@@ -1,8 +1,13 @@
-# go-url-shortener
+
+### go-url-shortener
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/mrceyhun/go-url-shortener)](https://goreportcard.com/report/github.com/mrceyhun/go-url-shortener)
+[![GoDoc](https://godoc.org/github.com/mrceyhun/go-url-shortener?status.svg)](https://godoc.org/github.com/mrceyhun/go-url-shortener)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 Simple web service to shorten long urls and keep hash:url key-value maps in MongoDB.
 
-Service is abstracted to use any database.
+Service database agnostic and can use any DB.
 
 ## how to run
 
