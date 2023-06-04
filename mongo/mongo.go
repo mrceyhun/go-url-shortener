@@ -23,7 +23,13 @@ type dbConnector struct {
 // Insert model.ShortUrl to the MongoDB
 func (mc dbConnector) Insert(ctx *context.Context, data *model.ShortUrl) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	_, err := mc.collection.InsertOne(*ctx, *data)
+	// if hash is not in db, create new one
+	opts := options.Update().SetUpsert(true)
+	_, err := mc.collection.UpdateOne(
+		*ctx,
+		bson.D{{"Hash", data.Hash}},
+		bson.D{{"$set", *data}},
+		opts)
 	return err
 }
 

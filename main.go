@@ -31,11 +31,8 @@ var timeout = time.Duration(*paramTimeout) * time.Second
 func MainRouter() http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery(), server.MiddlewareReqHandler())
-
 	docs.SwaggerInfo.BasePath = "/api/v1"
-
 	v1 := r.Group("/api/v1")
-
 	shortUrl := v1.Group("/short-url")
 	{
 		shortUrl.GET("/:id", controllers.GetUrlByHash)
@@ -65,16 +62,12 @@ func initializeMongoConnection() {
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
-
 	// get timout seconds from input parameter and create its duration
 	timeout = time.Duration(*paramTimeout) * time.Second
-
 	// set controller timeout
 	controllers.Timeout = timeout
-
 	// connect to Mongo
 	initializeMongoConnection()
-
 	// create server group
 	var g errgroup.Group
 	mainServer := &http.Server{
