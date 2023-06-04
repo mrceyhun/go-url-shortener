@@ -1,1 +1,1 @@
-# short-url-service
+# go-url-shortener
