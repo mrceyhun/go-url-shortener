@@ -9,7 +9,7 @@ Simple web service to shorten long urls and keep hash:url key-value maps in Mong
 
 Service database agnostic and can use any DB.
 
-## how to run
+#### how to
 
 Start a mongo docker container
 
